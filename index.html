@@ -1,1 +1,143 @@
-# PrefixCalculator
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prefix Calculator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: auto;
+    }
+
+    input, button {
+      margin-top: 10px;
+    }
+
+    .invalid-input {
+      border-color: red;
+    }
+    input[type="text"] {
+    width: 100%;
+    box-sizing: border-box;
+  }
+</style>
+</head>
+<body>
+  <h1>Public Address, Script Address, and Private Key (secret key) Prefix Calculator</h1>
+  <p>Enter a public key address, a script address, or a private key to calculate the respective hexadecimal and decimal prefixes.</p>
+
+  <label for="public-key-address">Public Address:</label><br>
+  <input type="text" id="public-key-address" name="public-key-address"><br>
+  <label for="script-address">Script Address:</label><br>
+  <input type="text" id="script-address" name="script-address"><br>
+  <label for="private-key">Private Key:</label><br>
+  <input type="text" id="private-key" name="private-key"><br><br>
+  <br>
+  <button id="calculate-prefixes">Calculate Prefixes</button>
+  <br>
+  <br>
+
+  <div id="output"></div>
+
+  <script>
+    const b58 = [...'123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'];
+    const b58_dict = Object.fromEntries(b58.map((value, index) => [value, index]));
+
+    function validateInput(input, inputType) {
+      const regex = /^[1-9A-HJ-NP-Za-km-z]*$/;
+      const valid = regex.test(input);
+      document.getElementById(inputType).classList.toggle('invalid-input', !valid);
+      return valid;
+    }
+
+    function unbase58(bitcoin_address) {
+      if (!bitcoin_address) {
+        throw new Error("Subroutine unbase58 needs base58 encoded bitcoin address to decode!");
+      }
+      if (!/^[1-9A-HJ-NP-Za-km-z]*$/.test(bitcoin_address)) {
+        throw new Error("Cannot Decode! Invalid Base58 Character(s)!");
+      }
+
+      let decoded_array_size = bitcoin_address.length;
+      let decoded_binary_address = new Array(decoded_array_size).fill(0);
+      let leading_ones = bitcoin_address.length - bitcoin_address.replace(/^1*/, '').length;
+
+      for (let b58_char of bitcoin_address.split('').map(c => b58_dict[c])) {
+        for (let decoded_byte_index = decoded_array_size - 1; decoded_byte_index >= 0; decoded_byte_index--) {
+          b58_char += 58 * (decoded_binary_address[decoded_byte_index] || 0);
+          decoded_binary_address[decoded_byte_index] = b58_char % 256;
+          b58_char = Math.floor(b58_char / 256);
+        }
+      }
+      decoded_binary_address = new Uint8Array(decoded_binary_address).filter(byte => byte !== 0).reduce((acc, byte) => acc + String.fromCharCode(byte), '');
+
+      return '\x00'.repeat(leading_ones) + decoded_binary_address;
+    }
+
+    function process_prefix(prefix, type) {
+  // Decode the Base58 encoded prefix to a binary address
+  let binary_address = unbase58(prefix);
+
+  // Convert the binary address to a hexadecimal string
+  let hex_address = [...binary_address].map(char => char.charCodeAt(0).toString(16).padStart(2, '0')).join('');
+
+  // Extract the first two characters of the hex string
+  let first_two_hex_chars = hex_address.slice(0, 2);
+
+  // Convert the first two characters of the hex string to a decimal value
+  let decimal_value = parseInt(first_two_hex_chars, 16);
+
+  return `${type}:<br>${prefix}<br>Hexadecimal Prefix: ${first_two_hex_chars}<br>Decimal Prefix: ${decimal_value}<br><br>`;
+}
+
+document.getElementById('calculate-prefixes').addEventListener('click', () => {
+  const publicKeyAddress = document.getElementById('public-key-address').value;
+  const scriptAddress = document.getElementById('script-address').value;
+  const privateKey = document.getElementById('private-key').value;
+
+  let output = '';
+
+  if (publicKeyAddress && validateInput(publicKeyAddress, 'public-key-address')) {
+    output += process_prefix(publicKeyAddress, 'Public Key Address');
+  }
+
+  if (scriptAddress && validateInput(scriptAddress, 'script-address')) {
+    output += process_prefix(scriptAddress, 'Script Address');
+  }
+
+  if (privateKey && validateInput(privateKey, 'private-key')) {
+    output += process_prefix(privateKey, 'Private Key');
+  }
+
+  document.getElementById('output').innerHTML = output;
+});
+
+function validateInput(input, inputId) {
+  const inputElement = document.getElementById(inputId);
+  const regex = /^[1-9A-HJ-NP-Za-km-z]*$/;
+  const validLengths = {
+    'public-key-address': [33, 34],
+    'script-address': [33, 34],
+    'private-key': [51, 52],
+  };
+
+  const validLength = validLengths[inputId].includes(input.length);
+
+  if (regex.test(input) && validLength) {
+    inputElement.style.borderColor = 'initial';
+    return true;
+  } else {
+    inputElement.style.borderColor = 'red';
+    return false;
+  }
+}
+  </script>
+<h3>License</h3>
+<p>Please see the software <a href="LICENCE" target="_blank">license</a> for more information.</p>
+  <p>
+    The software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose, and non-infringement. In no event shall the authors or copyright holders be liable for any claim, damages or other liability, whether in an action of contract, tort, or otherwise, arising from, out of or in connection with the software or the use or other dealings in the software.
+  </p>
+</body>
+</html>
