@@ -18,6 +18,6 @@ All crucial calculations are performed locally on your browser. If you prefer, y
 
 ## License
 
-Please see the [software license](LICENSE.html) for more information.
+Please see the [software license](https://github.com/7h3v01c3/PrefixCalculator/blob/7h3v01c3-patch-1/LICENSE) for more information.
 
 The software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose, and non-infringement. In no event shall the authors or copyright holders be liable for any claim, damages or other liability, whether in an action of contract, tort, or otherwise, arising from, out of or in connection with the software or the use or other dealings in the software.
